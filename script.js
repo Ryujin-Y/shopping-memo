@@ -20,7 +20,8 @@ document.addEventListener("DOMContentLoaded", function() {
     function saveMemos() {
         const memos = [];
         document.querySelectorAll("#memo-list li").forEach(li => {
-            const text = li.querySelector("span").textContent;
+            const span = li.querySelector("span");
+            const text = span.textContent.replace(` (by ${li.dataset.user})`, "");
             const user = li.dataset.user;
             memos.push({ text, user });
         });
