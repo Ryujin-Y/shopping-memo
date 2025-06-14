@@ -7,31 +7,26 @@ document.addEventListener("DOMContentLoaded", function() {
     // 現在のユーザー
     let currentUser = userSelect.value;
 
-    // localStorage からメモ一覧を読み込んで表示
-    function loadMemos() {
-        memoList.innerHTML = ""; // 一旦クリア
-        const memos = JSON.parse(localStorage.getItem("shared_memos")) || [];
-        memos.forEach(memo => {
-            createMemoElement(memo.text, memo.user);
-        });
-    }
-
-    // localStorage にメモ一覧を保存
-    function saveMemos() {
-        const memos = [];
-        document.querySelectorAll("#memo-list li").forEach(li => {
-            const span = li.querySelector("span");
-            const text = span.textContent.replace(` (by ${li.dataset.user})`, "");
-            const user = li.dataset.user;
-            memos.push({ text, user });
-        });
-        localStorage.setItem("shared_memos", JSON.stringify(memos));
+    // メモ一覧を取得して表示
+    async function loadMemos() {
+        try {
+            const response = await fetch('http://localhost:3000/api/memos');
+            const memos = await response.json();
+            
+            memoList.innerHTML = ""; // 一旦クリア
+            memos.forEach((memo, index) => {
+                createMemoElement(memo.text, memo.user, index);
+            });
+        } catch (error) {
+            console.error('メモの読み込みに失敗しました:', error);
+        }
     }
 
     // メモの要素を作成してリストに追加
-    function createMemoElement(memoText, user) {
+    function createMemoElement(memoText, user, index) {
         const li = document.createElement("li");
         li.dataset.user = user;
+        li.dataset.index = index;
 
         const span = document.createElement("span");
         span.textContent = `${memoText} (by ${user})`;
@@ -42,9 +37,17 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // 自分のメモのみ削除可能
         if (user === currentUser) {
-            deleteButton.addEventListener("click", function() {
-                memoList.removeChild(li);
-                saveMemos(); // 削除後に保存
+            deleteButton.addEventListener("click", async function() {
+                try {
+                    const response = await fetch(`http://localhost:3000/api/memos/${index}`, {
+                        method: 'DELETE'
+                    });
+                    if (response.ok) {
+                        memoList.removeChild(li);
+                    }
+                } catch (error) {
+                    console.error('メモの削除に失敗しました:', error);
+                }
             });
         } else {
             deleteButton.disabled = true;
@@ -58,27 +61,33 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     // 追加ボタンが押されたとき
-    addButton.addEventListener("click", function() {
+    addButton.addEventListener("click", async function() {
         const memoText = memoInput.value.trim();
         if (memoText === "") {
             alert("メモを入力してください");
             return;
         }
 
-        // 既存のメモを取得
-        const existingMemos = JSON.parse(localStorage.getItem("shared_memos")) || [];
-        
-        // 新しいメモを追加
-        existingMemos.push({ text: memoText, user: currentUser });
-        
-        // 保存
-        localStorage.setItem("shared_memos", JSON.stringify(existingMemos));
-        
-        // 表示を更新
-        loadMemos();
+        try {
+            const response = await fetch('http://localhost:3000/api/memos', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    text: memoText,
+                    user: currentUser
+                })
+            });
 
-        memoInput.value = "";
-        memoInput.focus();
+            if (response.ok) {
+                loadMemos(); // メモ一覧を更新
+                memoInput.value = "";
+                memoInput.focus();
+            }
+        } catch (error) {
+            console.error('メモの追加に失敗しました:', error);
+        }
     });
 
     // ユーザー選択が変わったとき
