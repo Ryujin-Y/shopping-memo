@@ -65,8 +65,17 @@ document.addEventListener("DOMContentLoaded", function() {
             return;
         }
 
-        createMemoElement(memoText, currentUser);
-        saveMemos(); // 追加後に保存
+        // 既存のメモを取得
+        const existingMemos = JSON.parse(localStorage.getItem("shared_memos")) || [];
+        
+        // 新しいメモを追加
+        existingMemos.push({ text: memoText, user: currentUser });
+        
+        // 保存
+        localStorage.setItem("shared_memos", JSON.stringify(existingMemos));
+        
+        // 表示を更新
+        loadMemos();
 
         memoInput.value = "";
         memoInput.focus();
