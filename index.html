@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>買い物メモアプリ（ユーザー切替）</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <div class="container">
+        <h1>🛒 買い物メモ</h1>
+
+        <div class="user-area">
+            <label for="user-select">ユーザー：</label>
+            <select id="user-select">
+                <option value="userA">User A</option>
+                <option value="userB">User B</option>
+            </select>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="memo-input" placeholder="メモを入力..." />
+            <button id="add-button">追加</button>
+        </div>
+
+        <ul id="memo-list"></ul>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
