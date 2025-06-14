@@ -10,36 +10,45 @@ document.addEventListener("DOMContentLoaded", function() {
     // localStorage からメモ一覧を読み込んで表示
     function loadMemos() {
         memoList.innerHTML = ""; // 一旦クリア
-        const memos = JSON.parse(localStorage.getItem(`memos_${currentUser}`)) || [];
-        memos.forEach(memoText => {
-            createMemoElement(memoText);
+        const memos = JSON.parse(localStorage.getItem("shared_memos")) || [];
+        memos.forEach(memo => {
+            createMemoElement(memo.text, memo.user);
         });
     }
 
     // localStorage にメモ一覧を保存
     function saveMemos() {
         const memos = [];
-        document.querySelectorAll("#memo-list li span").forEach(span => {
-            memos.push(span.textContent);
+        document.querySelectorAll("#memo-list li").forEach(li => {
+            const text = li.querySelector("span").textContent;
+            const user = li.dataset.user;
+            memos.push({ text, user });
         });
-        localStorage.setItem(`memos_${currentUser}`, JSON.stringify(memos));
+        localStorage.setItem("shared_memos", JSON.stringify(memos));
     }
 
     // メモの要素を作成してリストに追加
-    function createMemoElement(memoText) {
+    function createMemoElement(memoText, user) {
         const li = document.createElement("li");
+        li.dataset.user = user;
 
         const span = document.createElement("span");
-        span.textContent = memoText;
+        span.textContent = `${memoText} (by ${user})`;
 
         const deleteButton = document.createElement("button");
         deleteButton.textContent = "削除";
         deleteButton.classList.add("delete-button");
 
-        deleteButton.addEventListener("click", function() {
-            memoList.removeChild(li);
-            saveMemos(); // 削除後に保存
-        });
+        // 自分のメモのみ削除可能
+        if (user === currentUser) {
+            deleteButton.addEventListener("click", function() {
+                memoList.removeChild(li);
+                saveMemos(); // 削除後に保存
+            });
+        } else {
+            deleteButton.disabled = true;
+            deleteButton.style.opacity = "0.5";
+        }
 
         li.appendChild(span);
         li.appendChild(deleteButton);
@@ -55,7 +64,7 @@ document.addEventListener("DOMContentLoaded", function() {
             return;
         }
 
-        createMemoElement(memoText);
+        createMemoElement(memoText, currentUser);
         saveMemos(); // 追加後に保存
 
         memoInput.value = "";
@@ -68,6 +77,6 @@ document.addEventListener("DOMContentLoaded", function() {
         loadMemos();
     });
 
-    // 初回ロード時に現在のユーザーのメモを読み込み
+    // 初回ロード時にメモを読み込み
     loadMemos();
 });
